@@ -1,0 +1,32 @@
+
+server.port=8090
+
+# MariaDB
+spring.datasource.driverClassName=org.mariadb.jdbc.Driver
+spring.datasource.url=jdbc:mariadb://localhost:3306/springBootApi
+spring.datasource.username=test
+spring.datasource.password=test1234
+
+# swagger
+spring.mvc.pathmatch.matching-strategy=ant-path-matcher
+
+# spring-security
+spring.security.user.name=test
+spring.security.user.password=test1234
+
+# mybatis config, vo package, xml path
+mybatis.config=/mybatis/mybatis-config.xml
+mybatis.type-aliases-package=com.api.app.online.**.vo
+mybatis.mapper-locations=/mapper/**/*_SQL.xml
+
+# mybatis snake case to camel case
+mybatis.configuration.map-underscore-to-camel-case=true
+
+# mybatis null 
+mybatis.configuration.jdbc-type-for-null=null
+mybatis.configuration.call-setters-on-nulls=true
+
+
+# 파일 업로드 크기
+spring.servlet.multipart.maxFileSize=100MB
+spring.servlet.multipart.maxRequestSize=100MB

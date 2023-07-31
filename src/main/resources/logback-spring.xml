@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 60초마다 설정파일 변경 확인하여 변경 시 갱신 -->
+<configuration scan="true" scanPeriod="60 seconds">
+	<springProfile name="local">
+		<property resource="application.yml" />
+	</springProfile>
+	
+    <property name="LOG_PATH" value="../../springBootAPILog"/>
+    <property name="LOG_FILE_NAME" value="logback"/> 
+    <property name="LOG_LEVEL" value="INFO"/> 
+	
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss}:[%thread] %-5level - %msg%n</Pattern>
+		</layout>
+	</appender>
+	
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender"> 
+        <!-- 파일경로 설정 --> 
+        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file> 
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"> 
+            <pattern>%d{yyyy-MM-dd HH:mm:ss}:[%thread] %-5level - %msg%n</pattern> 
+        </encoder> 
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy"> 
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log</fileNamePattern> 
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP"> 
+                <maxFileSize>20MB</maxFileSize> 
+            </timeBasedFileNamingAndTriggeringPolicy> 
+        </rollingPolicy> 
+    </appender> 
+	
+    <root level="${LOG_LEVEL}"> 
+        <appender-ref ref="CONSOLE"/> 
+        <appender-ref ref="FILE"/> 
+    </root> 
+    
+    <logger name="jdbc.sqltiming" level="${log.sql.level}"/>
+</configuration>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.api.app.online.notice.mapper.NoticeMapper">
+	
+	<!-- 공지사항 목록 조회 -->
+	<select id="selectNoticeList" parameterType="map" resultType="map">
+		SELECT 
+			ROW_NUMBER() OVER(ORDER BY t.IS_TODAY_IN_RANGE DESC, t.CREATED_AT ASC) AS rn
+			, t.NOTICE_ID AS noticeId
+			, t.NOTICE_TITLE AS title
+			, t.NOTICE_POST_START_DATE AS postStartDate
+			, t.NOTICE_POST_END_DATE AS postEndDate
+			, t.IS_TODAY_IN_RANGE AS isTodayInRange
+			, t.CREATED_BY AS writerID
+			, t.CREATED_NAME AS writerName
+			, t.CREATED_AT AS createdAt
+			, t.DELETED_BY AS deleteBy
+			, t.DELETED_AT AS deleteAt
+			, t.HITS AS hits
+		FROM 
+		(
+            SELECT 
+                NOTICE_ID
+                , NOTICE_TITLE
+                , NOTICE_POST_START_DATE
+                , NOTICE_POST_END_DATE
+                ,  CASE
+                        WHEN SYSDATE() BETWEEN NOTICE_POST_START_DATE AND NOTICE_POST_END_DATE THEN 1
+                        ELSE 2
+                    END AS IS_TODAY_IN_RANGE
+                , CREATED_BY
+                , CREATED_NAME
+                , CREATED_AT
+                , DELETED_BY
+                , DELETED_AT
+                , HITS
+            FROM A_NOTICE
+            WHERE DELETED_BY IS NULL
+            <if test="search != null and !search.equals('')">
+				AND INSTR(NOTICE_TITLE , #{search}) <![CDATA[ > ]]> 0
+			</if>
+		) t
+		WHERE 1=1
+		ORDER BY rn DESC
+		LIMIT ${page}, 10
+	</select>
+	
+	<!-- 공지사항 상세 -->
+	<select id="selectNoticeDetail" parameterType="map" resultType="map">
+		SELECT 
+			NOTICE_ID AS noticeId
+			, NOTICE_TITLE AS title
+			, NOTICE_CONTENT AS content
+			, NOTICE_POST_START_DATE AS postStartDate
+			, NOTICE_POST_END_DATE AS postEndDate
+			, ATTACHMENTS AS attachments
+			, CREATED_BY AS writerID
+			, CREATED_NAME AS writerName
+			, CREATED_AT AS createdAt
+			, DELETED_BY AS deleteBy
+			, DELETED_AT AS deleteAt
+			, HITS AS hits
+		FROM A_NOTICE 
+		WHERE NOTICE_ID = #{noticeId}
+	</select>
+    
+	<!-- 공지사항 조회수 증가 -->
+	<update id="updateNoticeHits" parameterType="map">
+		UPDATE A_NOTICE
+        SET 
+            HITS = (SELECT (HITS+1) FROM  A_NOTICE WHERE NOTICE_ID = #{noticeId})
+		WHERE NOTICE_ID = #{noticeId}
+	</update>
+
+	<!-- 공지사항 등록 -->
+	<insert id="insertNotice" parameterType="map">
+		INSERT INTO A_NOTICE 
+		SET
+            NOTICE_ID = (SELECT CONCAT(UNIX_TIMESTAMP(), '_', SUBSTRING(MD5(RAND()), 1, 3)))
+			, NOTICE_TITLE = #{title}
+			, NOTICE_CONTENT = #{content}
+			<if test="postStartDate != null and !postStartDate.equals('')">
+			, NOTICE_POST_START_DATE = #{postStartDate}
+			</if>
+			<if test="postEndDate != null and !postEndDate.equals('')">
+			, NOTICE_POST_END_DATE = #{postEndDate}
+			</if>
+			<if test="attachments != null and !attachments.equals('')">
+			, ATTACHMENTS = #{attachments}
+			</if>
+			, CREATED_BY = #{userId}
+			, CREATED_NAME = #{userName}
+	</insert>
+
+	<!-- 공지사항 수정 -->
+	<update id="updateNotice" parameterType="map">
+		UPDATE A_NOTICE
+		SET 
+			<if test="title != null and !title.equals('')">
+			NOTICE_TITLE = #{title},
+			</if>
+			<if test="content != null and !content.equals('')">
+			NOTICE_CONTENT = #{content},
+			</if>
+			<if test="postStartDate != null and !postStartDate.equals('')">
+            NOTICE_POST_START_DATE = #{postStartDate},
+            </if>
+            <if test="postEndDate != null and !postEndDate.equals('')">
+            NOTICE_POST_END_DATE = #{postEndDate},
+            </if>
+			<if test="attachments != null and !attachments.equals('')">
+			ATTACHMENTS = #{attachments},
+			</if>
+			MODIFIED_BY = #{userId}
+		WHERE NOTICE_ID = #{noticeId}  AND DELETED_BY IS NULL
+	</update>
+
+	<!-- 공지사항 삭제 -->
+	<update id="deleteNotice" parameterType="map">
+		UPDATE A_NOTICE
+        SET 
+            DELETED_BY = #{userId} 
+			, DELETED_AT = sysdate()
+		WHERE NOTICE_ID = #{noticeId}  AND DELETED_BY IS NULL
+	</update>
+	
+	<!-- 공지사항 복구 -->
+	<update id="restoreResult" parameterType="map">
+		UPDATE CS_NOTICE
+        SET 
+            DELETED_BY = null
+			, DELETED_AT = null
+		WHERE NOTICE_ID = #{noticeId}
+	</update>
+
+</mapper>
